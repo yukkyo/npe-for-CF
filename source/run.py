@@ -93,31 +93,7 @@ def split_train_valid_test(df, ratios, seed):
     return df_train, df_valid, df_test
 
 
-def test():
-    # TODO: use pathlib
-    # Read data
-    df = pd.read_csv(
-        "../input/ml-100k/u.data",
-        sep="\t",
-        names=["userid", "itemid", "rating", "timestamp"],
-        usecols=["userid", "itemid", "rating"]
-    )
-    print("load end!")
-    # Modify options
-    # ops = Option()
-    options["num_users"] = df["userid"].max()
-    options["num_items"] = df["itemid"].max()
-
-    # Data preparation
-    df = preparation(df)
-
-    # Split train, valid, test
-    df_train, df_valid, df_test = split_train_valid_test(df,
-                                                         options["ratios_train_valid_test"],
-                                                         options["seed"])
-    del df
-    gc.collect()
-
+def train_and_save(df_train, df_valid):
     # for negative down sampling
     df_positive = df_train[df_train["rating"] == 1].copy()
     df_negative = df_train[df_train["rating"] == 0].copy()
@@ -176,6 +152,37 @@ def test():
                     break
         print("learning end")
         model.save(sess, options["path_save_model"])
+
+
+def test():
+    # TODO: use pathlib
+    # Read data
+    df = pd.read_csv(
+        "../input/ml-100k/u.data",
+        sep="\t",
+        names=["userid", "itemid", "rating", "timestamp"],
+        usecols=["userid", "itemid", "rating"]
+    )
+    print("load end!")
+    # Modify options
+    # ops = Option()
+    options["num_users"] = df["userid"].max()
+    options["num_items"] = df["itemid"].max()
+
+    # Data preparation
+    df = preparation(df)
+
+    # Split train, valid, test
+    df_train, df_valid, df_test = split_train_valid_test(df,
+                                                         options["ratios_train_valid_test"],
+                                                         options["seed"])
+    del df
+    gc.collect()
+
+    # training model
+    train_and_save(df_train, df_valid)
+
+    # TODO: Predict & eval
 
 
 if __name__ == "__main__":
