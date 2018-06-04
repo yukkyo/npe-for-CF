@@ -104,7 +104,6 @@ def test():
     # Data preparation
     df = preparation(df)
 
-    # TODO: calc loss by valid
     # TODO: early stopping
 
     # Split train, valid, test
@@ -140,6 +139,7 @@ def test():
         # model init
         model = NeuralPersonalizedEmbedding(options, sess)
         for i in range(epoch):
+            print("epoch: ", epoch, end=" ")
             # Negative down sampling
             df_tmp = pd.concat([df_positive,
                                 df_negative.sample(n=sample_size_negative)],
@@ -155,10 +155,14 @@ def test():
                             userids[idxs],
                             itemids[idxs],
                             labels[idxs])
-        # For check early stopping
-            print("epoch: ", epoch)
-            model.print_loss()
+            print("end")
+            # For check early stopping
+            loss_train = model.get_loss()
+            loss_valid = model.calc_loss(user_item_mtx_valid, userids_valid,
+                                         itemids_valid, labels_valid)
+            print("loss(train): ", loss_train, "loss(valid): ", loss_valid)
         print("learning end")
+
 
 
 if __name__ == "__main__":

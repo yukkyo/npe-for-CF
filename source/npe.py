@@ -108,10 +108,20 @@ class NeuralPersonalizedEmbedding(object):
         return predicts
 
     def print_loss(self):
-        print("loss: ", self._loss)
+        print("loss(train): ", self._loss)
 
     def get_loss(self):
         return self._loss
+
+    def calc_loss(self, user_item_mtx, userids, itemids, labels):
+        loss = self._session.run(
+            self._lossop,
+            feed_dict={
+                self._R: user_item_mtx, self._userids: userids,
+                self._itemids: itemids, self._labels: labels
+            }
+        )
+        return loss
 
     def save(self, session, path):
         self.saver.save(session, path)
