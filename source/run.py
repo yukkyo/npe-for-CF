@@ -171,6 +171,7 @@ def test():
                     print("Early stopping !!")
                     break
         print("learning end")
+        model.save(sess, "../saved_model/")
 
 
 if __name__ == "__main__":

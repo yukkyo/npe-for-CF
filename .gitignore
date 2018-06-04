@@ -4,3 +4,4 @@
 input/*
 source/__pycache__
 venv/*
+saved_model/*
