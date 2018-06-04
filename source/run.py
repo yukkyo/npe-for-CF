@@ -100,6 +100,7 @@ def test():
         "learning_rate": 0.001,
         "dropout_rate": 0.3,  # == 1 - keep_prob,
         "ratios_train_valid_test": [0.7, 0.1, 0.2],
+        "count_for_early_stopping": 5
     }
     # Data preparation
     df = preparation(df)
@@ -138,8 +139,12 @@ def test():
     with tf.Graph().as_default(), tf.Session() as sess:
         # model init
         model = NeuralPersonalizedEmbedding(options, sess)
+        # loss for early stopping
+        loss_valid_best = np.inf
+        cnt_not_decrease_loss = 0
+
         for i in range(epoch):
-            print("epoch: ", epoch, end=" ")
+            print("epoch: ", i, end=" ")
             # Negative down sampling
             df_tmp = pd.concat([df_positive,
                                 df_negative.sample(n=sample_size_negative)],
@@ -151,18 +156,23 @@ def test():
             rnd_idx = np.random.permutation(len(userids))
             for idxs in np.array_split(rnd_idx, len(userids) // batch_size):
                 # user-item matrix is not changed by negative down sampling
-                model.train(user_item_mtx_train,
-                            userids[idxs],
-                            itemids[idxs],
-                            labels[idxs])
+                model.train(user_item_mtx_train, userids[idxs],
+                            itemids[idxs], labels[idxs])
             print("end")
-            # For check early stopping
+            # Print train, valid loss
             loss_train = model.get_loss()
             loss_valid = model.calc_loss(user_item_mtx_valid, userids_valid,
                                          itemids_valid, labels_valid)
             print("loss(train): ", loss_train, "loss(valid): ", loss_valid)
+            # Early stopping
+            if loss_valid < loss_valid_best:
+                loss_valid_best = loss_valid
+            else:
+                cnt_not_decrease_loss += 1
+                if cnt_not_decrease_loss >= options["count_for_early_stopping"]:
+                    print("Early stopping !!")
+                    break
         print("learning end")
-
 
 
 if __name__ == "__main__":
