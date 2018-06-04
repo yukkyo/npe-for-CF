@@ -6,6 +6,24 @@ import gc
 from sklearn.model_selection import train_test_split
 from numba import jit
 
+# Options
+options = {
+    # params for npe
+    "num_users": 0,  # redefine when read data
+    "num_items": 0,  # redefine when read data
+    "dim_emb": 50,
+    "seed": 10,
+    "learning_rate": 0.001,
+    "dropout_rate": 0.3,  # == 1 - keep_prob,
+    # not necessary for npe
+    "ratios_train_valid_test": [0.7, 0.1, 0.2],
+    "count_for_early_stopping": 5,
+    "path_save_model": "../saved_model/",
+    "epoch": 3,
+    "batch_size": 10000,
+    "negative_rate": 4  # number of negative samples per positive example
+}
+
 
 def main():
     options = {
@@ -76,12 +94,8 @@ def split_train_valid_test(df, ratios, seed):
 
 
 def test():
-    epoch = 3
-    batch_size = 10000
-    # number of negative samples per positive example
-    negative_rate = 4
-    
     # TODO: use pathlib
+    # Read data
     df = pd.read_csv(
         "../input/ml-100k/u.data",
         sep="\t",
@@ -89,19 +103,11 @@ def test():
         usecols=["userid", "itemid", "rating"]
     )
     print("load end!")
-    count_users = df["userid"].max()
-    count_items = df["itemid"].max()
-    # Options
-    options = {
-        "num_users": count_users,
-        "num_items": count_items,
-        "dim_emb": 30,
-        "seed": 10,
-        "learning_rate": 0.001,
-        "dropout_rate": 0.3,  # == 1 - keep_prob,
-        "ratios_train_valid_test": [0.7, 0.1, 0.2],
-        "count_for_early_stopping": 5
-    }
+    # Modify options
+    # ops = Option()
+    options["num_users"] = df["userid"].max()
+    options["num_items"] = df["itemid"].max()
+
     # Data preparation
     df = preparation(df)
 
@@ -111,28 +117,26 @@ def test():
                                                          options["seed"])
     del df
     gc.collect()
+
     # for negative down sampling
     df_positive = df_train[df_train["rating"] == 1].copy()
     df_negative = df_train[df_train["rating"] == 0].copy()
     sample_size_negative = len(df_negative)
-    if len(df_positive) * negative_rate < len(df_negative):
-        sample_size_negative = len(df_positive) * negative_rate
+    if len(df_positive) * options["negative_rate"] < len(df_negative):
+        sample_size_negative = len(df_positive) * options["negative_rate"]
     gc.collect()
     print("train(positive): ", len(df_positive), "train(negative)", len(df_negative))
 
+    shape = (options["num_users"], options["num_items"])
+
     # user item matrix by train data. It is not changed by negative samples
     userids, itemids, labels = split_userid_itemid(df_positive)
-    user_item_mtx_train = np.zeros((count_users, count_items))
-    user_item_mtx_train = count_user_item_mtx(user_item_mtx_train, userids,
-                                              itemids, labels)
+    user_item_mtx_train = count_user_item_mtx(np.zeros(shape), userids, itemids, labels)
 
     # user item matrix by valid data
     userids_valid, itemids_valid, labels_valid = split_userid_itemid(df_valid)
-    user_item_mtx_valid = np.zeros((count_users, count_items))
-    user_item_mtx_valid = count_user_item_mtx(user_item_mtx_valid,
-                                              userids_valid,
-                                              itemids_valid,
-                                              labels_valid)
+    user_item_mtx_valid = count_user_item_mtx(np.zeros(shape), userids_valid,
+                                              itemids_valid, labels_valid)
 
     with tf.Graph().as_default(), tf.Session() as sess:
         # model init
@@ -141,7 +145,7 @@ def test():
         loss_valid_best = np.inf
         cnt_not_decrease_loss = 0
 
-        for i in range(epoch):
+        for i in range(options["epoch"]):
             print("epoch: ", i, end=" ")
             # Negative down sampling
             df_tmp = pd.concat([df_positive,
@@ -152,7 +156,7 @@ def test():
             gc.collect()
             # Batch processing
             rnd_idx = np.random.permutation(len(userids))
-            for idxs in np.array_split(rnd_idx, len(userids) // batch_size):
+            for idxs in np.array_split(rnd_idx, len(userids) // options["batch_size"]):
                 # user-item matrix is not changed by negative down sampling
                 model.train(user_item_mtx_train, userids[idxs],
                             itemids[idxs], labels[idxs])
@@ -171,7 +175,7 @@ def test():
                     print("Early stopping !!")
                     break
         print("learning end")
-        model.save(sess, "../saved_model/")
+        model.save(sess, options["path_save_model"])
 
 
 if __name__ == "__main__":
