@@ -8,6 +8,7 @@ class NeuralPersonalizedEmbedding(object):
         self._num_items = options["num_items"]
         self._dim_emb = options["dim_emb"]
         self._learning_rate = options["learning_rate"]
+        self._dropout_rate = options["dropout_rate"]
         self.build_graph()
 
     def build_graph(self):
@@ -36,9 +37,11 @@ class NeuralPersonalizedEmbedding(object):
 
         # Converting userids in training data to embedding
         h = tf.nn.relu(tf.nn.embedding_lookup(emb_user, userids))
+        h = tf.layers.dropout(h, self._dropout_rate)
 
         # Converting itemids in training data to embedding
         w = tf.nn.relu(tf.nn.embedding_lookup(emb_item, itemids))
+        w = tf.layers.dropout(w, self._dropout_rate)
 
         # Convert training data to contet
         # contet = history user u clicked without item i
@@ -46,6 +49,7 @@ class NeuralPersonalizedEmbedding(object):
 
         # Convert context to embedding and through relu
         v = tf.nn.relu(tf.matmul(context, emb_context_item))
+        v = tf.layers.dropout(v, self._dropout_rate)
 
         # inner product
         r_1 = tf.reduce_sum(tf.multiply(h, w), axis=1)

@@ -4,13 +4,15 @@ import pandas as pd
 from npe import NeuralPersonalizedEmbedding
 import gc
 
+
 def main():
     options = {
         "num_users": 10,
         "num_items": 5,
         "dim_emb": 15,
         "seed": 10,
-        "learning_rate": 0.001
+        "learning_rate": 0.001,
+        "dropout_rate": 0.5  # == 1 - keep_prob. It is not tuned value
     }
     # args = parse_args()
     epoch = 100
@@ -72,7 +74,8 @@ def test():
         "num_items": user_item_mtx.shape[1],
         "dim_emb": 30,
         "seed": 10,
-        "learning_rate": 0.001
+        "learning_rate": 0.001,
+        "dropout_rate": 0.3  # == 1 - keep_prob
     }
     print(df.describe())
     print(options)
