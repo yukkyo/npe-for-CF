@@ -2,3 +2,5 @@
 .DS_Store
 .idea/*
 input/*
+source/__pycache__
+venv/*
