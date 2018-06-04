@@ -105,8 +105,6 @@ def test():
     # Data preparation
     df = preparation(df)
 
-    # TODO: early stopping
-
     # Split train, valid, test
     df_train, df_valid, df_test = split_train_valid_test(df,
                                                          options["ratios_train_valid_test"],
