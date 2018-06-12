@@ -8,14 +8,14 @@ from numba import jit
 
 # Options
 options = {
-    # params for npe
+    # Parameters  for npe
     "num_users": 0,  # redefine when read data
     "num_items": 0,  # redefine when read data
     "dim_emb": 50,
     "seed": 10,
     "learning_rate": 0.001,
     "dropout_rate": 0.3,  # == 1 - keep_prob,
-    # not necessary for npe
+    # These parameters is not necessary for npe
     "ratios_train_valid_test": [0.7, 0.1, 0.2],
     "count_for_early_stopping": 5,
     "path_save_model": "../saved_model/",
@@ -23,36 +23,6 @@ options = {
     "batch_size": 10000,
     "negative_rate": 4  # number of negative samples per positive example
 }
-
-
-def main():
-    options = {
-        "num_users": 10,
-        "num_items": 5,
-        "dim_emb": 15,
-        "seed": 10,
-        "learning_rate": 0.001,
-        "dropout_rate": 0.5  # == 1 - keep_prob. It is not tuned value
-    }
-    # args = parse_args()
-    epoch = 100
-    num_users = 10
-    num_items = 5
-    input_R = np.random.randint(0, 2, num_users * num_items).reshape((num_users, num_items))
-    input_userids = np.array([i for i in range(num_users) for j in range(num_items)])
-    input_itemids = np.array([j for i in range(num_users) for j in range(num_items)])
-    input_labels = np.array([input_R[i][j] for i in range(num_users) for j in range(num_items)])
-
-    with tf.Graph().as_default(), tf.Session() as session:
-        model = NeuralPersonalizedEmbedding(options, session)
-        for i in range(epoch):
-            model.train(input_R, input_userids, input_itemids, input_labels)
-            if i % 5 == 0:
-                model.print_loss()
-        print(model.predict(input_R, [3], [3]))
-        print(input_R[3][3])
-        #    model.eval()  # loss の表示
-        # model.save(session, "./mymodel_20180601.ckpt")
 
 
 def preparation(df):
@@ -103,6 +73,7 @@ def train_and_save(df_train, df_valid):
     gc.collect()
     print("train(positive): ", len(df_positive), "train(negative)", len(df_negative))
 
+    # shape of user-item matrix
     shape = (options["num_users"], options["num_items"])
 
     # user item matrix by train data. It is not changed by negative samples
@@ -154,7 +125,7 @@ def train_and_save(df_train, df_valid):
         model.save(sess, options["path_save_model"])
 
 
-def test():
+def test_train():
     # TODO: use pathlib
     # Read data
     df = pd.read_csv(
@@ -187,4 +158,4 @@ def test():
 
 if __name__ == "__main__":
     # main()
-    test()
+    test_train()
