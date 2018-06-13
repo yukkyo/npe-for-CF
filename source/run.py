@@ -8,6 +8,9 @@ from numba import jit
 
 # Options
 options = {
+    # About input data
+
+
     # Parameters  for npe
     "num_users": 0,  # redefine when read data
     "num_items": 0,  # redefine when read data
@@ -134,16 +137,7 @@ def train(df_train, df_valid):
         model.save(sess, options["path_save_model"])
 
 
-def test_train():
-    # TODO: use pathlib
-    # Read data
-    df = pd.read_csv(
-        "../input/ml-100k/u.data",
-        sep="\t",
-        names=["userid", "itemid", "rating", "timestamp"],
-        usecols=["userid", "itemid", "rating"]
-    )
-    print("load end!")
+def test_train(df):
     # Modify options
     # ops = Option()
     options["num_users"] = df["userid"].max()
@@ -156,6 +150,8 @@ def test_train():
     df_train, df_valid, df_test = split_train_valid_test(df,
                                                          options["ratios_train_valid_test"],
                                                          options["seed"])
+
+    # For memory, you can comment it if you have enough memory.
     del df
     gc.collect()
 
@@ -166,5 +162,14 @@ def test_train():
 
 
 if __name__ == "__main__":
+    # TODO: use pathlib
+    # Read data
+    df = pd.read_csv(
+        "../input/ml-100k/u.data",
+        sep="\t",
+        names=["userid", "itemid", "rating", "timestamp"],
+        usecols=["userid", "itemid", "rating"]
+    )
+    print("load end!")
     # main()
-    test_train()
+    test_train(df)
