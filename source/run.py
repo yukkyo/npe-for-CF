@@ -63,7 +63,16 @@ def split_train_valid_test(df, ratios, seed):
     return df_train, df_valid, df_test
 
 
-def train_and_save(df_train, df_valid):
+def train(df_train, df_valid):
+    """
+    Train npe model with these techniques
+      * negative down sampling
+      * mini-batch learning
+      * early stopping
+    :param df_train:
+    :param df_valid:
+    :return:
+    """
     # for negative down sampling
     df_positive = df_train[df_train["rating"] == 1].copy()
     df_negative = df_train[df_train["rating"] == 0].copy()
@@ -101,7 +110,7 @@ def train_and_save(df_train, df_valid):
             userids, itemids, labels = split_userid_itemid(df_tmp)
             del df_tmp
             gc.collect()
-            # Batch processing
+            # Mini batch learning
             rnd_idx = np.random.permutation(len(userids))
             for idxs in np.array_split(rnd_idx, len(userids) // options["batch_size"]):
                 # user-item matrix is not changed by negative down sampling
@@ -151,7 +160,7 @@ def test_train():
     gc.collect()
 
     # training model
-    train_and_save(df_train, df_valid)
+    train(df_train, df_valid)
 
     # TODO: Predict & eval
 
